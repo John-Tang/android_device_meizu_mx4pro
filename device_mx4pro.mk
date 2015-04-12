@@ -6,8 +6,16 @@ $(call inherit-product, device/common/gps/gps_us_supl.mk)
 $(call inherit-product-if-exists, vendor/meizu/mx4pro/mx4pro-vendor.mk)
 
 DEVICE_PACKAGE_OVERLAYS += device/meizu/mx4pro/overlay
-include $(call all-subdir-makefiles)
+
 LOCAL_PATH := device/meizu/mx4pro
+
+ifneq ($(OUT),)
+ifeq ($(MK_KERNEL_OBJ),)
+$(shell mkdir -p $(OUT)/obj/KERNEL_OBJ/usr/include 2>/dev/null)
+MK_KERNEL_OBJ := true
+endif
+endif
+
 ifeq ($(TARGET_PREBUILT_KERNEL),)
 	LOCAL_KERNEL := $(LOCAL_PATH)/kernel
 else
@@ -15,16 +23,28 @@ else
 endif
 
 PRODUCT_COPY_FILES += \
-    $(LOCAL_KERNEL):kernel
-	
+    $(LOCAL_KERNEL):kernel \
+    bionic/libc/zoneinfo/tzdata:recovery/root/system/usr/share/zoneinfo/tzdata
+
 PRODUCT_DEFAULT_PROPERTY_OVERRIDES := \
 ro.weibo.com=weibo.com/cofface
 
-PRODUCT_COPY_FILES += \
-     $(LOCAL_PATH)/fstab.exynos5430:root/fstab.exynos5430
-
 $(call inherit-product, build/target/product/full.mk)
 
+ADDITIONAL_DEFAULT_PROPERTIES += \
+    ro.secure=0 \
+    ro.bootloader.mode=download \
+    persist.sys.usb.config=mass_storage \
+    ro.adb.secure=0
+
+PRODUCT_PROPERTY_OVERRIDES += \
+    ro.sf.lcd_density=640 \
+    persist.timed.enable=true
+
 PRODUCT_BUILD_PROP_OVERRIDES += BUILD_UTC_DATE=0
+PRODUCT_COPY_FILES_OVERRIDES += \
+    root/fstab.goldfish \
+    root/ueventd.goldfish.rc
+
 PRODUCT_NAME := full_mx4pro
 PRODUCT_DEVICE := mx4pro
